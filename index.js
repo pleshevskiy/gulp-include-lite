@@ -1,17 +1,10 @@
 var Transform = require('stream').Transform;
 var fs   = require('fs');
 var path = require('path');
-var data = require('gulp-data');
 
 patterns = {
-    js: [
-        /^([\s\t]*)(?:\/\/\s*)\+include ([\w_/\\\-]+)/,
-        /^([\s\t]*)(?:\/\/\s*)\+include .+$/gm
-    ],
-    css: [
-        /^([\s\t]*)(?:\/\*\s*)\+include ([\w_/\\\-]+)\s*\*\//,
-        /^([\s\t]*)(?:\/\*\s*)\+include .+\s*\*\/$/gm
-    ]
+    js: /^([\s\t]*)(?:\/\/\s*)\+include ([\w_/\\\-]+)/gm,
+    css: /^([\s\t]*)(?:\/\*\s*)\+include ([\w_/\\\-]+)\s*\*\//gm
 };
 
 module.exports = function() {
@@ -31,46 +24,44 @@ module.exports = function() {
             ext: path.extname(file.path)
         };
 
-        var matchList = (fileConfig.content).match(getCurrentRegExp(fileConfig, true));
-        if (matchList == null) {
-            callback(undefined, file);
-            return;
-        }
-
+        var currentRegExp = getCurrentRegExp(fileConfig);
+        var matchLength = 0;
         var count = 0;
-        for (var i = 0, max = matchList.length; i < max; ++i) {
-            includeFileContent(matchList[i], fileConfig, function (err) {
-                if (err) {
-                    console.log(err);
-                    callback(err, file);
-                    return;
-                }
+        var _match;
 
-                if (++count === matchList.length) {
-                    file.contents = new Buffer(fileConfig.content);
-                    callback(err, file);
-                }
-            });
+        while ((_match = currentRegExp.exec(fileConfig.content)) != null) {
+            ++matchLength;
+            includeFileContent(_match, fileConfig, checkComplete);
         }
+
+        if (matchLength == 0) {
+            callback(null, file);
+        }
+
+        function checkComplete(err) {
+            if (err) {
+                callback(err, file);
+                return;
+            }
+
+            if (++count === matchLength) {
+                file.contents = new Buffer(fileConfig.content);
+                callback(err, file);
+            }
+        }
+
     };
 
     return transformStream;
 };
 
 
-function includeFileContent(matchLine, fileConfig, callback) {
-    var _match = matchLine.match(getCurrentRegExp(fileConfig, false));
-    if (_match == null) {
-        console.error('match error!');
-        callback(undefined);
-        return;
-    }
+function includeFileContent(_match, fileConfig, callback) {
     var fileBasename = path.basename(_match[2]);
     if (fileBasename.indexOf('.') === -1) {
         fileBasename += fileConfig.ext;
     }
     var filepath = path.join(fileConfig.dir, path.dirname(_match[2]), '_' + fileBasename);
-    console.log(fileConfig.dir, path.dirname(_match[2]), '_' + fileBasename);
     var whiteSpace = _match[1];
     fs.readFile(filepath, 'utf8', function (err, data) {
         if (err) {
@@ -87,6 +78,8 @@ function includeFileContent(matchLine, fileConfig, callback) {
 }
 
 
-function getCurrentRegExp(fileConfig, withGlobalFlag) {
-    return patterns[fileConfig.ext.slice(1)][+withGlobalFlag];
+function getCurrentRegExp(fileConfig) {
+    var p = patterns[fileConfig.ext.slice(1)];
+    p.index = 0;
+    return p;
 }
