@@ -2,9 +2,9 @@ var Transform = require('stream').Transform;
 var fs   = require('fs');
 var path = require('path');
 
-patterns = {
-    js: /^([\s\t]*)(?:\/\/\s*)\+include ([\w_/\\\-]+)/gm,
-    css: /^([\s\t]*)(?:\/\*\s*)\+include ([\w_/\\\-]+)\s*\*\//gm
+var patterns = {
+    js: /^([\s\t]*)(?:\/\/\s*)\+include ([^\s\n\t]+)/gm,
+    css: /^([\s\t]*)(?:\/\*\s*)\+include ([^\s\n\t]+)\s*\*\//gm
 };
 
 module.exports = function() {
@@ -30,8 +30,7 @@ module.exports = function() {
 
         function checkComplete(err) {
             if (err) {
-                callback(err, file);
-                return;
+                console.log(err);
             }
 
             var _match = currentRegExp.exec(fileConfig.content);
