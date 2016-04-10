@@ -25,18 +25,8 @@ module.exports = function() {
         };
 
         var currentRegExp = getCurrentRegExp(fileConfig);
-        var matchLength = 0;
-        var count = 0;
-        var _match;
 
-        while ((_match = currentRegExp.exec(fileConfig.content)) != null) {
-            ++matchLength;
-            includeFileContent(_match, fileConfig, checkComplete);
-        }
-
-        if (matchLength == 0) {
-            callback(null, file);
-        }
+        checkComplete();
 
         function checkComplete(err) {
             if (err) {
@@ -44,19 +34,23 @@ module.exports = function() {
                 return;
             }
 
-            if (++count === matchLength) {
-                file.contents = new Buffer(fileConfig.content);
-                callback(err, file);
-            }
-        }
+            var _match = currentRegExp.exec(fileConfig.content);
 
+            if (_match != null) {
+                includeFileContent(_match, fileConfig, checkComplete);
+                return;
+            }
+
+            file.contents = new Buffer(fileConfig.content);
+            callback(err, file);
+        }
     };
 
     return transformStream;
 };
 
 
-function includeFileContent(_match, fileConfig, callback) {
+function includeFileContent(_match, fileConfig, next) {
     var fileBasename = path.basename(_match[2]);
     if (fileBasename.indexOf('.') === -1) {
         fileBasename += fileConfig.ext;
@@ -66,14 +60,14 @@ function includeFileContent(_match, fileConfig, callback) {
     fs.readFile(filepath, 'utf8', function (err, data) {
         if (err) {
             console.log(err);
-            callback(err);
+            next(err);
         }
         var lines = data.split('\n');
         lines.forEach(function (value, i) {
             lines[i] = whiteSpace + value;
         });
         fileConfig.content = fileConfig.content.replace(_match[0], function () { return lines.join(''); });
-        callback(undefined);
+        next();
     });
 }
 
