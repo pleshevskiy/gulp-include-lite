@@ -1,6 +1,7 @@
 var Transform = require('stream').Transform;
 var fs   = require('fs');
 var path = require('path');
+var EOL  = require('os').EOL;
 
 var patterns = {
     js: /^([\s\t]*)(?:\/\/\s*)\+include ([^\s\n\t]+)/gm,
@@ -66,11 +67,11 @@ function includeFileContent(_match, fileConfig, next) {
             return;
         }
 
-        var lines = data.split('\n');
+        var lines = data.split(EOL);
         lines.forEach(function (value, i) {
             lines[i] = whiteSpace + value;
         });
-        fileConfig.content = fileConfig.content.replace(_match[0], function () { return lines.join(''); });
+        fileConfig.content = fileConfig.content.replace(_match[0], function () { return lines.join(EOL); });
         next();
     });
 }
