@@ -51,16 +51,21 @@ module.exports = function() {
 
 function includeFileContent(_match, fileConfig, next) {
     var fileBasename = path.basename(_match[2]);
+
     if (fileBasename.indexOf('.') === -1) {
         fileBasename += fileConfig.ext;
     }
+
     var filepath = path.join(fileConfig.dir, path.dirname(_match[2]), '_' + fileBasename);
     var whiteSpace = _match[1];
+
     fs.readFile(filepath, 'utf8', function (err, data) {
         if (err) {
             console.log(err);
             next(err);
+            return;
         }
+
         var lines = data.split('\n');
         lines.forEach(function (value, i) {
             lines[i] = whiteSpace + value;
