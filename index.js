@@ -4,8 +4,8 @@ var path = require('path');
 var EOL  = require('os').EOL;
 
 var patterns = {
-    js: /^([\s\t]*)(?:\/\/\s*)\+include ([^\s\n\t]+)/gm,
-    css: /^([\s\t]*)(?:\/\*\s*)\+include ([^\s\n\t]+)\s*\*\//gm
+    js: /^([\s\t]*)(?:\/\/\s*)include ([^\s\n\t]+)/gm,
+    css: /^([\s\t]*)(?:\/\*\s*)include ([^\s\n\t]+)\s*\*\//gm
 };
 
 module.exports = function() {
